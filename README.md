@@ -15,10 +15,10 @@ Catatan: Tidak boleh menggunakan crontab
 i) mengekstrak file zip tersebut. 
 ii) menyimpan daftar file dari folder “campur2” yang memiliki ekstensi .txt ke dalam file daftar.txt.
 Catatan:
-○ Gunakan fork dan exec.
-○ Gunakan minimal 3 proses yang diakhiri dengan exec.
-○ Gunakan pipe
-○ Pastikan file daftar.txt dapat diakses dari text editor
+- Gunakan fork dan exec.
+- Gunakan minimal 3 proses yang diakhiri dengan exec.
+- Gunakan pipe
+- Pastikan file daftar.txt dapat diakses dari text editor
 
 ## Soal 4
 4. Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan
