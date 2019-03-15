@@ -20,6 +20,69 @@ Catatan:
 - Gunakan pipe
 - Pastikan file daftar.txt dapat diakses dari text editor
 
+###Jawab
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main()
+{
+    int pid, pid1;
+    int pip[2];
+    char txt[1000];
+
+
+    pid = fork();
+    if (pipe(pip)==-1)
+    {
+        fprintf(stderr, "Pipe Failed" );
+        return 1;
+    }
+
+    if (pid < 0) {
+     exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        execl("/usr/bin/unzip", "unzip", "/home/ariefp/praktikum/campur2.zip", (char *)0);
+    }
+
+    else {
+        while((wait(&pid))>0);
+        pid1 = fork();
+
+	if (pid1 < 0) {
+    	  exit(EXIT_FAILURE);
+    	}
+
+        if (pid1 == 0) {
+          chdir("/home/ariefp/praktikum/campur2");
+          dup2 (pip[1], STDOUT_FILENO);
+    	  close(pip[0]);
+   	  close(pip[1]);
+	  execl("/usr/bin/find", "find" , "-iname", "*.txt", (char *)0);
+        }
+        else {
+	  while((wait(&pid1)) > 0);
+          close(pip[1]);
+          int n;
+          FILE *daftar;
+          daftar = fopen("daftar.txt", "w");
+	  n =read(pip[0], txt, sizeof(txt));
+	  fprintf(daftar, "(%.*s)\n", n, txt);
+          fclose(daftar);
+	}
+    }
+
+    return 0;
+}
+
+```
+
+
+
 ## Soal 4
 4. Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan
 seringkali tergiur untuk membaca isi makan_enak.txt karena ngidam makanan enak. Sebagai teman yang baik, Anda membantu Elen dengan membuat program C yang
@@ -31,6 +94,72 @@ File makan_enak.txt terakhir dibuka pada detik ke-1
 Pada detik ke-10 terdapat file makan_sehat1.txt dan makan_sehat2.txtCatatan:
 - dilarang menggunakan crontab
 - Contoh nama file : makan_sehat1.txt, makan_sehat2.txt, dst
+
+### Jawab
+```
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+
+int main() {
+  pid_t pid, sid;
+  int urutan=0;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1){
+   FILE* fp;
+   struct stat buf;
+   stat("/home/ariefp/Documents/makanan/makan_enak.txt", &buf);
+   time_t rawtime = time(NULL);
+   time_t access = buf.st_atime;
+   if((rawtime - access) <= 30){
+    char lokasi[150]= "/home/ariefp/Documents/makanan/";
+    char nama[100];
+    urutan++;
+    sprintf(nama, "makan_sehat%d.txt", urutan);
+    strcat(lokasi, nama);
+    fp = fopen(lokasi, "w+");
+    fclose(fp);
+   }
+  sleep(5);
+ }
+  return 0;
+}
+
+```
 
 ## Soal 5
 5. Kerjakan poin a dan b di bawah:
