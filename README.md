@@ -4,11 +4,156 @@
 1. Elen mempunyai pekerjaan pada studio sebagai fotografer. Suatu hari ada seorang klien yang bernama Kusuma yang meminta untuk mengubah nama file yang memiliki ekstensi .png menjadi “[namafile]_grey.png”. Karena jumlah file yang diberikan Kusuma tidak manusiawi, maka Elen meminta bantuan kalian untuk membuat suatu program C yang dapat mengubah nama secara otomatis dan diletakkan pada direktori /home/[user]/modul2/gambar.
 Catatan : Tidak boleh menggunakan crontab.
 
+### Jawab
+```
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <dirent.h>
+
+int main() {
+  pid_t pid, sid;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1) {
+	DIR *d;
+	struct dirent *dir;
+	char fname[255][255];
+	char fnew[255][255];
+	char srcpath[255];
+	char destpath[255];
+	int i=0,j=0;
+
+	d = opendir("campur2/");
+	if (d != NULL){
+		while ((dir = readdir(d)) != NULL){
+			    strcpy(fname[i],dir->d_name);
+			char *a = strrchr(dir->d_name, '.');
+			if (strcmp(a, ".png") == 0){		
+				strncpy(fnew[j], fname[i], (strlen(fname[i])-4));
+				strcat(fnew[j], "_grey.png");			
+				strcpy(srcpath,"campur2/");
+				strcpy(destpath,"gambar/");
+				strcat(srcpath, fname[i]);
+				strcat(destpath, fnew[j]);
+
+
+				rename(srcpath, destpath);		
+				memset(srcpath, 0, sizeof srcpath);
+				memset(destpath, 0, sizeof destpath);				
+				j++;
+		}
+		i++;
+	}
+        closedir(d);
+    }
+    sleep(30);
+  }
+}
+```
+### Penjelasan :
+Pada soal ini, kita disuruh membuat program yang dapat mengubah file yang mempunyai ekstensi .png menjadi “[namafile]_grey.png”.  Kami menggunakan file yang sudah ada yaitu file png yang terdapat dalam folder campuran2.zip. Pertama, kita buka dan membaca file yang ada di dalam folder campuran2. Ketika membaca file-file yang ada di dalam folder campuran2, program akan mencari file yang berekstensi .png, lalu akan dimasukkan ke dalam array fnew[i] dengan hanya mengcopy string yang terdapat di depan ekstensi .png. Setelah itu, nama file tadi akan ditambahkan dengan “_grey.png” dan akan disimpan di dalam folder gambar. Kemudian array path yaitu srcpath dan destpath agar array tersebut dapat dipakai berulang kali. 
+
+
 ## Soal 2
 2. Pada suatu hari Kusuma dicampakkan oleh Elen karena Elen dimenangkan oleh orang lain. Semua kenangan tentang Elen berada pada file bernama “elen.ku” pada direktori “hatiku”. Karena sedih berkepanjangan, tugas kalian sebagai teman Kusuma adalah membantunya untuk menghapus semua kenangan tentang Elen dengan membuat
 program C yang bisa mendeteksi owner dan group dan menghapus file “elen.ku” setiap 3 detik dengan syarat ketika owner dan grupnya menjadi “www-data”. Ternyata kamu
 memiliki kendala karena permission pada file “elen.ku”. Jadi, ubahlah permissionnya menjadi 777. Setelah kenangan tentang Elen terhapus, maka Kusuma bisa move on.
-Catatan: Tidak boleh menggunakan crontab 
+Catatan: Tidak boleh menggunakan crontab
+
+### Jawab
+```
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <pwd.h>
+#include <grp.h>
+
+
+int main() {
+  pid_t pid, sid;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1) {
+	struct stat status;
+	struct group *group;
+	struct passwd *pass;
+	char fname[255][255];
+	int i;
+
+	stat("elen.ku",&status);
+
+	uid_t userid = status.st_uid;
+	gid_t groupid = status.st_gid;
+	group = getgrgid(groupid);
+	pass = getpwuid(userid);
+
+	if(strcmp(group->gr_name,"www-data") == 0 && strcmp(pass->pw_name,"www-data") == 0){
+		remove("elen.ku");
+		sleep(30);
+		}
+	}
+	exit(EXIT_SUCCESS);
+}
+
+```
+
+### Penjelasan
+Pada soal ini, kita disuruh membuat program untuk menghapus file elen.ku pada folder hatiku. Pertama, kita mengambil status dari userid dan groupid untuk mengambil nama user dan nama group di dalam file elen.ku. Setelah ketemu nama user dan groupnya, nama group dan ama user akan dicompare dengan “www-data”. Jika cocok, maka file elen.ku akan dihapus dengan fungsi remove.
 
 ## Soal 3
 3. Diberikan file campur2.zip. Di dalam file tersebut terdapat folder “campur2”. Buatlah program C yang dapat :
@@ -20,7 +165,7 @@ Catatan:
 - Gunakan pipe
 - Pastikan file daftar.txt dapat diakses dari text editor
 
-###Jawab
+### Jawab
 ```
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +225,8 @@ int main()
 }
 
 ```
-
+### Penjelasan
+Penyelesaian ini menggunakan fork 2 kali untuk memanggil child 2 kali. Dalam soal ini juga menggunakan pipe untuk meneruskan hasil dari child sebelumnya. if pertama (child pertama) digunakan untuk unzip file campur2.zip. child yang selanjutnya digunakan untuk mencari file yang berekstensi txt di dalam folder hasil unzip. Lalu yang terakhir digunakan untuk menuliskan semua nama file yang berekstensi txtx ke file daftar.txt
 
 
 ## Soal 4
@@ -161,6 +307,9 @@ int main() {
 
 ```
 
+### Penjelasan
+Pada soal ini dibutuhkan untuk mendaptakan waktu akses file dan waktu sekarang.rawtime adalah waktu yang sekarang dan access adalah waktu akses file makan_enak.txt dengan menggunakan st.atime. JIka file pernah diakses kurang lebih 30 detik yang lalu maka akan membuat file baru makan_sehat#.txt.
+
 ## Soal 5
 5. Kerjakan poin a dan b di bawah:
 a. Buatlah program c untuk mencatat log setiap menit dari file log pada syslog ke
@@ -172,3 +321,82 @@ Ket:
 b. Buatlah program c untuk menghentikan program di atas.
 NB: Dilarang menggunakan crontab dan tidak memakai argumen ketika menjalankan
 program.
+
+### Jawab
+
+```
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <time.h>
+
+int main() {
+  pid_t pid, sid,child;
+  int status;
+  static int  urutan ;
+  urutan = 0;
+  char a[100];
+  char letak[150]="/home/ariefp/praktikum/";
+  char file[100];
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+  pid = fork();
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/home/ariefp/praktikum")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+while(1){
+  if(urutan%30==0){
+    child= fork();
+    if(child==0){
+        char a[100];
+        time_t now = time(NULL);
+        strftime(a, 20, "%d:%m:%Y-%H:%M", localtime(&now));
+        char *argv[3] = {"mkdir", a, NULL};
+  	execv("/bin/mkdir", argv);
+    }
+  }
+  urutan ++;
+  child= fork();
+  if(child ==0){
+   sprintf(file, "/log%d", urutan);
+   strcat(letak, a);
+   strcat(letak, file);
+   strcat(letak, ".log");
+   char *argv[4]= {"cp", "/var/log/syslog", letak, NULL};
+   execv("/bin/cp", argv);
+  }
+  sleep(60);
+ }
+ exit(EXIT_SUCCESS);
+}
+```
+###Penjelasan
+Untuk membuat folder bernama waktu sekarang menggunakan mkdir. Waktu didapatkan dengan cara strftime. Urutan selalu ditambah tiap menit. Lalu setelah 30 menit membuat folder baru. Karena membutuhkan exec maka dibuat child tiap akan menjalankannya. var/log/syslog di copy ke nama file yang baru. Karena file belum ada maka file baru akan terbentuk
+
